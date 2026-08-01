@@ -237,13 +237,9 @@ export function HomeAlerts() {
                         {a.shift.horaAbertura ?? "—"} →{" "}
                         {a.shift.horaFechamento ?? "aberto"}
                       </p>
-                      {a.shift.funcionarioNome || a.shift.funcionarioCodigo != null ? (
-                        <p className="text-xs text-fg-muted">
-                          Operador:{" "}
-                          <span className="font-medium text-fg">
-                            {a.shift.funcionarioNome ??
-                              `cód. ${a.shift.funcionarioCodigo}`}
-                          </span>
+                      {a.shift.funcionarioNome ? (
+                        <p className="text-xs font-medium text-fg">
+                          {a.shift.funcionarioNome}
                         </p>
                       ) : null}
                       {a.primaryForma ? (
@@ -409,9 +405,9 @@ function AlertDetail({
                   <dd className="font-semibold tabular">{shift.codigo}</dd>
                 </div>
               ) : null}
-              <div>
-                <dt className="text-[11px] text-fg-subtle">Empresa</dt>
-                <dd className="font-semibold tabular">{shift.empresaCodigo}</dd>
+              <div className="col-span-2 sm:col-span-1">
+                <dt className="text-[11px] text-fg-subtle">Posto</dt>
+                <dd className="font-semibold">{alert.fantasia}</dd>
               </div>
               <div>
                 <dt className="text-[11px] text-fg-subtle">PDV</dt>
@@ -426,15 +422,8 @@ function AlertDetail({
                 </dd>
               </div>
               <div className="col-span-2 sm:col-span-1">
-                <dt className="text-[11px] text-fg-subtle">Funcionário / operador</dt>
-                <dd className="font-semibold">
-                  {shift.funcionarioNome ?? "—"}
-                  {shift.funcionarioCodigo != null ? (
-                    <span className="ml-1 text-xs font-normal tabular text-fg-muted">
-                      (cód. {shift.funcionarioCodigo})
-                    </span>
-                  ) : null}
-                </dd>
+                <dt className="text-[11px] text-fg-subtle">Funcionário</dt>
+                <dd className="font-semibold">{shift.funcionarioNome ?? "—"}</dd>
               </div>
               <div>
                 <dt className="text-[11px] text-fg-subtle">Centro de custo</dt>
@@ -488,7 +477,7 @@ function AlertDetail({
               {shift.funcionarioNome ? (
                 <>
                   {" "}
-                  · operador{" "}
+                  ·{" "}
                   <span className="font-semibold text-fg">
                     {shift.funcionarioNome}
                   </span>
@@ -506,9 +495,6 @@ function AlertDetail({
             <Clock3 className="h-4 w-4 text-primary" />
             <CardTitle>Quebra por forma de pagamento</CardTitle>
           </div>
-          <CardDescription>
-            Apresentado × apurado (CAIXA_APRESENTADO) — o que bate e o que não
-          </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -585,43 +571,6 @@ function AlertDetail({
         </CardContent>
       </Card>
 
-      {station && station.turnos.length > 1 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Outros turnos do dia</CardTitle>
-            <CardDescription>
-              Contexto no mesmo posto em {formatShortDate(alert.date)}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {station.turnos
-              .filter((t) => t.caixaCodigo !== shift.caixaCodigo)
-              .map((t) => (
-                <div
-                  key={t.caixaCodigo}
-                  className="flex items-center justify-between rounded-[var(--radius-md)] border border-border px-3 py-2 text-sm"
-                >
-                  <span>
-                    {t.turno} · {t.horaAbertura ?? "—"} →{" "}
-                    {t.horaFechamento ?? "aberto"}
-                  </span>
-                  <span
-                    className={cn(
-                      "tabular font-semibold",
-                      Math.abs(t.diferenca) < 0.01
-                        ? "text-success"
-                        : t.diferenca < 0
-                          ? "text-danger"
-                          : "text-warn",
-                    )}
-                  >
-                    {formatCurrency(t.diferenca)}
-                  </span>
-                </div>
-              ))}
-          </CardContent>
-        </Card>
-      ) : null}
     </div>
   );
 }
