@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { RedeDashboard } from "@/components/caixa/rede-dashboard";
+import { HomeAlerts } from "@/components/caixa/home-alerts";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
 function HomePage() {
-  return <RedeDashboard />;
+  return <HomeAlerts />;
 }

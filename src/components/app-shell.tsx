@@ -1,10 +1,10 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Building2, Settings2, Fuel } from "lucide-react";
+import { Building2, Fuel, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { to: "/", label: "Rede", icon: Building2 },
-  { to: "/conexao", label: "Conexão", icon: Settings2 },
+  { to: "/", label: "Alertas", icon: ShieldAlert },
+  { to: "/rede", label: "Rede", icon: Building2 },
 ] as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -23,7 +23,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 Caixa Rede
               </p>
               <p className="text-[11px] text-fg-subtle">
-                Fechamento · POC WebPosto
+                Alertas de fechamento · D-1
               </p>
             </div>
           </Link>

@@ -389,13 +389,34 @@ export async function fetchStationDayLive(
   return stationFromEmp(emp, shifts);
 }
 
+function brazilTodayParts(): { y: number; m: number; d: number } {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = fmt.formatToParts(new Date());
+  return {
+    y: Number(parts.find((p) => p.type === "year")?.value),
+    m: Number(parts.find((p) => p.type === "month")?.value),
+    d: Number(parts.find((p) => p.type === "day")?.value),
+  };
+}
+
 export function yesterdayIso(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  // D-1 no fuso dos postos (Brasil)
+  const { y, m, d } = brazilTodayParts();
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() - 1);
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
+}
+
+export function daysAgoIso(days: number): string {
+  const { y, m, d } = brazilTodayParts();
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() - days);
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
 }
 
 export function explainDivergence(shift: ShiftSummary): string[] {
@@ -427,4 +448,127 @@ export function explainDivergence(shift: ShiftSummary): string[] {
     );
   }
   return hints;
+}
+
+
+export type ShiftAlert = {
+  id: string;
+  empresaCodigo: number;
+  fantasia: string;
+  cidade: string | null;
+  estado: string | null;
+  date: string;
+  shift: ShiftSummary;
+  primaryForma: FormaPagamentoLinha | null;
+  hints: string[];
+  absDiff: number;
+};
+
+export type AlertFeed = {
+  fromDate: string;
+  toDate: string;
+  generatedAt: string;
+  threshold: number;
+  alerts: ShiftAlert[];
+  totals: {
+    count: number;
+    d1Count: number;
+    openCount: number;
+    maxAbs: number;
+    sumAbs: number;
+  };
+};
+
+/**
+ * Shift-level alerts (default: last 7 days ending D-1, Brazil).
+ * Sort: |diferença| desc → oldest date → oldest abertura.
+ */
+export async function buildAlertFeed(
+  options?: { lookbackDays?: number; threshold?: number; cfg?: FuelConfig },
+): Promise<AlertFeed> {
+  const lookbackDays = options?.lookbackDays ?? 7;
+  const threshold = options?.threshold ?? ALERT_THRESHOLD;
+  const config = options?.cfg ?? loadConfig();
+  const toDate = yesterdayIso();
+  const fromDate = daysAgoIso(lookbackDays);
+
+  const empresas = await fetchWebPostoEmpresas(config);
+  const empMap = new Map(empresas.map((e) => [e.empresaCodigo, e]));
+
+  const [caixaRaw, aprRaw] = await Promise.all([
+    wpFetchAll(
+      "CAIXA",
+      { dataInicial: fromDate, dataFinal: toDate },
+      config,
+      "page",
+    ),
+    wpFetchAll(
+      "CAIXA_APRESENTADO",
+      { dataInicial: fromDate, dataFinal: toDate },
+      config,
+      "cursor",
+    ),
+  ]);
+
+  const aprMap = new Map<string, WebPostoApresentadoRow>();
+  for (const row of aprRaw as unknown as WebPostoApresentadoRow[]) {
+    aprMap.set(`${row.empresaCodigo}:${row.caixaCodigo}`, row);
+  }
+
+  const caixaMap = new Map<string, WebPostoCaixaRow>();
+  for (const row of caixaRaw as unknown as WebPostoCaixaRow[]) {
+    if (!empMap.has(row.empresaCodigo)) continue;
+    const key = `${row.empresaCodigo}:${row.caixaCodigo}`;
+    if (!caixaMap.has(key)) caixaMap.set(key, row);
+  }
+
+  const alerts: ShiftAlert[] = [];
+  for (const c of caixaMap.values()) {
+    const shift = buildShift(
+      c,
+      aprMap.get(`${c.empresaCodigo}:${c.caixaCodigo}`),
+    );
+    const absDiff = Math.abs(shift.diferenca);
+    const isAlert =
+      absDiff > threshold || (!shift.fechado && shift.apurado > 0);
+    if (!isAlert) continue;
+
+    const emp = empMap.get(c.empresaCodigo);
+    const date = (c.dataMovimento || "").slice(0, 10);
+    const primaryForma = shift.divergenciasForma[0] ?? null;
+    alerts.push({
+      id: `${c.empresaCodigo}-${c.caixaCodigo}-${date}`,
+      empresaCodigo: c.empresaCodigo,
+      fantasia: emp?.fantasia || emp?.razao || `Empresa ${c.empresaCodigo}`,
+      cidade: emp?.cidade ?? null,
+      estado: emp?.estado ?? null,
+      date,
+      shift,
+      primaryForma,
+      hints: explainDivergence(shift),
+      absDiff,
+    });
+  }
+
+  alerts.sort((a, b) => {
+    if (b.absDiff !== a.absDiff) return b.absDiff - a.absDiff;
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    return (a.shift.abertura || "").localeCompare(b.shift.abertura || "");
+  });
+
+  const d1 = yesterdayIso();
+  return {
+    fromDate,
+    toDate,
+    generatedAt: new Date().toISOString(),
+    threshold,
+    alerts,
+    totals: {
+      count: alerts.length,
+      d1Count: alerts.filter((a) => a.date === d1).length,
+      openCount: alerts.filter((a) => !a.shift.fechado).length,
+      maxAbs: alerts.reduce((m, a) => Math.max(m, a.absDiff), 0),
+      sumAbs: alerts.reduce((s, a) => s + a.absDiff, 0),
+    },
+  };
 }
