@@ -97,9 +97,10 @@ async function wpFetchAll(
 ): Promise<Record<string, unknown>[]> {
   const base = cfg.webpostoBaseUrl.replace(/\/$/, "");
   const all: Record<string, unknown>[] = [];
+  const seenKeys = new Set<string>();
 
   if (mode === "page") {
-    for (let pagina = 0; pagina < 50; pagina++) {
+    for (let pagina = 0; pagina < 200; pagina++) {
       const url = new URL(`${base}/INTEGRACAO/${path}`);
       url.searchParams.set("CHAVE", cfg.webpostoApiKey);
       for (const [k, v] of Object.entries({
@@ -117,14 +118,27 @@ async function wpFetchAll(
       });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      const batch = Array.isArray(data) ? data : data.resultados || [];
-      all.push(...batch);
+      const batch: Record<string, unknown>[] = Array.isArray(data)
+        ? data
+        : data.resultados || [];
+      if (batch.length === 0) break;
+
+      let newCount = 0;
+      for (const row of batch) {
+        const key = `${row.empresaCodigo ?? ""}:${row.caixaCodigo ?? ""}:${row.dataMovimento ?? ""}`;
+        if (seenKeys.has(key)) continue;
+        seenKeys.add(key);
+        all.push(row);
+        newCount++;
+      }
+      // API sometimes re-serves the same page — stop if nothing new
+      if (newCount === 0) break;
       if (batch.length < 100) break;
     }
   } else {
     let ultimoCodigo: string | number | null = null;
     let prev: string | number | null = null;
-    for (let i = 0; i < 80; i++) {
+    for (let i = 0; i < 200; i++) {
       const url = new URL(`${base}/INTEGRACAO/${path}`);
       url.searchParams.set("CHAVE", cfg.webpostoApiKey);
       for (const [k, v] of Object.entries({
@@ -144,8 +158,20 @@ async function wpFetchAll(
       });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      const batch = Array.isArray(data) ? data : data.resultados || [];
-      all.push(...batch);
+      const batch: Record<string, unknown>[] = Array.isArray(data)
+        ? data
+        : data.resultados || [];
+      if (batch.length === 0) break;
+
+      let newCount = 0;
+      for (const row of batch) {
+        const key = `${row.empresaCodigo ?? ""}:${row.caixaCodigo ?? ""}`;
+        if (seenKeys.has(key)) continue;
+        seenKeys.add(key);
+        all.push(row);
+        newCount++;
+      }
+      if (newCount === 0) break;
       if (batch.length < 100) break;
       const next = Array.isArray(data) ? null : data.ultimoCodigo;
       if (next == null || next === "" || String(next) === String(prev)) break;
@@ -481,9 +507,10 @@ export type AlertFeed = {
 };
 
 /**
- * Shift-level alerts (default: last 90 days ending D-1, Brazil).
+ * Alertas por turno.
+ * D-1 is always fetched alone (API truncates wide ranges from the oldest end).
+ * Anteriores = D-2 and older, fetched in recent-first weekly chunks (up to 90 days).
  * Sort: |diferença| desc → oldest date → oldest abertura.
- * Home: D-1 vs. anteriores (tudo fora do D-1).
  */
 export async function buildAlertFeed(
   options?: { lookbackDays?: number; threshold?: number; cfg?: FuelConfig },
@@ -491,38 +518,72 @@ export async function buildAlertFeed(
   const lookbackDays = options?.lookbackDays ?? 90;
   const threshold = options?.threshold ?? ALERT_THRESHOLD;
   const config = options?.cfg ?? loadConfig();
-  const toDate = yesterdayIso();
+  const d1 = yesterdayIso();
   const fromDate = daysAgoIso(lookbackDays);
+  const toDate = d1;
 
   const empresas = await fetchWebPostoEmpresas(config);
   const empMap = new Map(empresas.map((e) => [e.empresaCodigo, e]));
 
-  const [caixaRaw, aprRaw] = await Promise.all([
-    wpFetchAll(
-      "CAIXA",
-      { dataInicial: fromDate, dataFinal: toDate },
-      config,
-      "page",
-    ),
-    wpFetchAll(
-      "CAIXA_APRESENTADO",
-      { dataInicial: fromDate, dataFinal: toDate },
-      config,
-      "cursor",
-    ),
-  ]);
-
-  const aprMap = new Map<string, WebPostoApresentadoRow>();
-  for (const row of aprRaw as unknown as WebPostoApresentadoRow[]) {
-    aprMap.set(`${row.empresaCodigo}:${row.caixaCodigo}`, row);
+  // Weekly chunks, newest first, ending at D-1. D-1 is its own single-day chunk.
+  const chunks: { from: string; to: string }[] = [{ from: d1, to: d1 }];
+  // D-2 back to lookback, 7-day windows newest-first
+  let cursorEnd = daysAgoIso(2); // D-2
+  const oldest = fromDate;
+  while (cursorEnd >= oldest) {
+    // start = max(oldest, end-6 days)
+    const endParts = cursorEnd.split("-").map(Number);
+    const endDt = new Date(Date.UTC(endParts[0], endParts[1] - 1, endParts[2]));
+    const startDt = new Date(endDt);
+    startDt.setUTCDate(startDt.getUTCDate() - 6);
+    let from = `${startDt.getUTCFullYear()}-${String(startDt.getUTCMonth() + 1).padStart(2, "0")}-${String(startDt.getUTCDate()).padStart(2, "0")}`;
+    if (from < oldest) from = oldest;
+    chunks.push({ from, to: cursorEnd });
+    // next window ends day before `from`
+    const nextEnd = new Date(Date.UTC(
+      Number(from.slice(0, 4)),
+      Number(from.slice(5, 7)) - 1,
+      Number(from.slice(8, 10)),
+    ));
+    nextEnd.setUTCDate(nextEnd.getUTCDate() - 1);
+    cursorEnd = `${nextEnd.getUTCFullYear()}-${String(nextEnd.getUTCMonth() + 1).padStart(2, "0")}-${String(nextEnd.getUTCDate()).padStart(2, "0")}`;
+    if (chunks.length > 30) break; // safety
   }
 
   const caixaMap = new Map<string, WebPostoCaixaRow>();
-  for (const row of caixaRaw as unknown as WebPostoCaixaRow[]) {
-    if (!empMap.has(row.empresaCodigo)) continue;
-    const key = `${row.empresaCodigo}:${row.caixaCodigo}`;
-    if (!caixaMap.has(key)) caixaMap.set(key, row);
+  const aprMap = new Map<string, WebPostoApresentadoRow>();
+
+  async function ingestChunk(chunk: { from: string; to: string }) {
+    const [caixaRaw, aprRaw] = await Promise.all([
+      wpFetchAll(
+        "CAIXA",
+        { dataInicial: chunk.from, dataFinal: chunk.to },
+        config,
+        "page",
+      ),
+      wpFetchAll(
+        "CAIXA_APRESENTADO",
+        { dataInicial: chunk.from, dataFinal: chunk.to },
+        config,
+        "cursor",
+      ),
+    ]);
+    for (const row of caixaRaw as unknown as WebPostoCaixaRow[]) {
+      if (!empMap.has(row.empresaCodigo)) continue;
+      const key = `${row.empresaCodigo}:${row.caixaCodigo}`;
+      if (!caixaMap.has(key)) caixaMap.set(key, row);
+    }
+    for (const row of aprRaw as unknown as WebPostoApresentadoRow[]) {
+      const key = `${row.empresaCodigo}:${row.caixaCodigo}`;
+      if (!aprMap.has(key)) aprMap.set(key, row);
+    }
   }
+
+  // D-1 first (always complete), then remaining weeks in parallel (newest already ordered)
+  await ingestChunk(chunks[0]);
+  await Promise.all(
+    chunks.slice(1).map((c) => ingestChunk(c).catch(() => undefined)),
+  );
 
   const alerts: ShiftAlert[] = [];
   for (const c of caixaMap.values()) {
@@ -558,7 +619,6 @@ export async function buildAlertFeed(
     return (a.shift.abertura || "").localeCompare(b.shift.abertura || "");
   });
 
-  const d1 = yesterdayIso();
   const d1Count = alerts.filter((a) => a.date === d1).length;
   return {
     fromDate,
