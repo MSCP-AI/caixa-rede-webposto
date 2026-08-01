@@ -111,7 +111,7 @@ export function HomeAlerts() {
           <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
             Alertas de caixa
           </h1>
-          <p className="mt-1 text-sm text-steel">
+          <p className="mt-1 text-sm text-green-700">
             Prioridade por valor · limite {formatCurrency(ALERT_THRESHOLD)}
           </p>
         </div>
@@ -207,7 +207,7 @@ export function HomeAlerts() {
                   >
                     <div className="min-w-0 flex-1">
                       <div className="mb-1 flex flex-wrap items-center gap-1.5">
-                        <span className="text-[11px] font-semibold tabular text-fg-subtle">
+                        <span className="text-[11px] font-semibold tabular text-green-700">
                           #{idx + 1}
                         </span>
                         {a.date === d1 ? (
@@ -222,7 +222,7 @@ export function HomeAlerts() {
                         )}
                       </div>
                       <p className="truncate font-semibold">{a.fantasia}</p>
-                      <p className="text-xs text-fg-muted">
+                      <p className="text-xs text-green-700">
                         {a.shift.turno}
                         {" · "}
                         {[a.cidade, a.estado].filter(Boolean).join("/")}
@@ -231,15 +231,15 @@ export function HomeAlerts() {
                         {a.shift.horaFechamento ?? "aberto"}
                       </p>
                       {a.shift.funcionarioNome ? (
-                        <p className="text-xs font-medium text-fg">
+                        <p className="text-xs font-medium text-ink">
                           {a.shift.funcionarioNome}
                         </p>
                       ) : null}
                       {a.primaryForma ? (
-                        <p className="mt-1 flex items-center gap-1 text-xs font-medium text-fg-muted">
-                          <Search className="h-3 w-3 text-warn" />
+                        <p className="mt-1 flex items-center gap-1 text-xs font-medium text-green-700">
+                          <Search className="h-3 w-3 text-primary" />
                           Olhar:{" "}
-                          <span className="text-fg">{a.primaryForma.forma}</span>
+                          <span className="text-green-800">{a.primaryForma.forma}</span>
                           {" ("}
                           {formatCurrency(a.primaryForma.diferenca)}
                           {")"}
@@ -257,7 +257,7 @@ export function HomeAlerts() {
                       >
                         {formatCurrency(a.shift.diferenca)}
                       </span>
-                      <span className="text-xs text-fg-subtle">
+                      <span className="text-xs text-green-700">
                         apurado {formatCurrency(a.shift.apurado)}
                       </span>
                     </div>
@@ -314,7 +314,7 @@ function AlertDetail({
         <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
           {alert.fantasia}
         </h1>
-        <p className="text-sm text-fg-muted">
+        <p className="text-sm text-green-700">
           {[alert.cidade, alert.estado].filter(Boolean).join(" · ")} ·{" "}
           {formatDateLabel(alert.date)} · {shift.turno}
         </p>
@@ -384,54 +384,54 @@ function AlertDetail({
           </ul>
 
           <div className="rounded-[var(--radius-md)] border border-border bg-surface p-4">
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-fg-subtle">
+            <p className="mb-2 font-mono-label text-green-700">
               Referências para achar no ERP (WebPosto)
             </p>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
               <div>
-                <dt className="text-[11px] text-fg-subtle">Cód. caixa</dt>
+                <dt className="text-[11px] text-green-700">Cód. caixa</dt>
                 <dd className="font-semibold tabular">{shift.caixaCodigo}</dd>
               </div>
               {shift.codigo != null && shift.codigo !== shift.caixaCodigo ? (
                 <div>
-                  <dt className="text-[11px] text-fg-subtle">Código</dt>
+                  <dt className="text-[11px] text-green-700">Código</dt>
                   <dd className="font-semibold tabular">{shift.codigo}</dd>
                 </div>
               ) : null}
               <div className="col-span-2 sm:col-span-1">
-                <dt className="text-[11px] text-fg-subtle">Posto</dt>
+                <dt className="text-[11px] text-green-700">Posto</dt>
                 <dd className="font-semibold">{alert.fantasia}</dd>
               </div>
               <div>
-                <dt className="text-[11px] text-fg-subtle">PDV</dt>
+                <dt className="text-[11px] text-green-700">PDV</dt>
                 <dd className="font-semibold tabular">
                   {shift.pdvCodigo ?? "—"}
                 </dd>
               </div>
               <div>
-                <dt className="text-[11px] text-fg-subtle">Turno (cód.)</dt>
+                <dt className="text-[11px] text-green-700">Turno (cód.)</dt>
                 <dd className="font-semibold tabular">
                   {shift.turnoCodigo ?? "—"} · {shift.turno}
                 </dd>
               </div>
               <div className="col-span-2 sm:col-span-1">
-                <dt className="text-[11px] text-fg-subtle">Funcionário</dt>
+                <dt className="text-[11px] text-green-700">Funcionário</dt>
                 <dd className="font-semibold">{shift.funcionarioNome ?? "—"}</dd>
               </div>
               <div>
-                <dt className="text-[11px] text-fg-subtle">Centro de custo</dt>
+                <dt className="text-[11px] text-green-700">Centro de custo</dt>
                 <dd className="font-semibold tabular">
                   {shift.centroCusto ?? "—"}
                 </dd>
               </div>
               <div>
-                <dt className="text-[11px] text-fg-subtle">Data movimento</dt>
+                <dt className="text-[11px] text-green-700">Data movimento</dt>
                 <dd className="font-semibold tabular">
                   {formatShortDate(alert.date)}
                 </dd>
               </div>
               <div>
-                <dt className="text-[11px] text-fg-subtle">Abertura</dt>
+                <dt className="text-[11px] text-green-700">Abertura</dt>
                 <dd className="font-semibold tabular text-xs">
                   {shift.abertura
                     ? new Date(shift.abertura).toLocaleString("pt-BR")
@@ -439,7 +439,7 @@ function AlertDetail({
                 </dd>
               </div>
               <div>
-                <dt className="text-[11px] text-fg-subtle">Fechamento</dt>
+                <dt className="text-[11px] text-green-700">Fechamento</dt>
                 <dd className="font-semibold tabular text-xs">
                   {shift.fechamento
                     ? new Date(shift.fechamento).toLocaleString("pt-BR")
@@ -448,12 +448,12 @@ function AlertDetail({
               </div>
               {shift.tipoInclusao ? (
                 <div>
-                  <dt className="text-[11px] text-fg-subtle">Inclusão</dt>
+                  <dt className="text-[11px] text-green-700">Inclusão</dt>
                   <dd className="font-semibold">{shift.tipoInclusao}</dd>
                 </div>
               ) : null}
             </dl>
-            <p className="mt-3 text-xs text-fg-muted">
+            <p className="mt-3 text-xs text-green-700">
               No WebPosto: busque o caixa{" "}
               <span className="font-semibold tabular text-fg">
                 {shift.caixaCodigo}
@@ -588,11 +588,11 @@ function MiniKpi({
         tone === "warn" && "border-warn/30 bg-warn-soft/30",
       )}
     >
-      <p className="font-mono-label text-steel">{label}</p>
+      <p className="font-mono-label text-green-700">{label}</p>
       <p className="mt-1.5 font-display text-xl font-extrabold tabular text-ink">
         {value}
       </p>
-      {hint ? <p className="mt-0.5 text-xs text-steel">{hint}</p> : null}
+      {hint ? <p className="mt-0.5 text-xs text-green-700">{hint}</p> : null}
     </div>
   );
 }
@@ -613,8 +613,8 @@ function ScopeChip({
       className={cn(
         "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
         active
-          ? "border-ink bg-ink text-white"
-          : "border-line bg-white text-steel hover:text-ink",
+          ? "border-primary bg-primary-soft text-green-800"
+          : "border-line bg-white text-steel hover:border-primary/40 hover:text-green-800",
       )}
     >
       {label}

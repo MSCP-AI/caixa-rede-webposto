@@ -24,7 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <p className="font-display text-[15px] font-extrabold tracking-tight text-ink">
                 Caixa Rede
               </p>
-              <p className="font-mono-label mt-1 text-steel">
+              <p className="font-mono-label mt-1 text-green-700">
                 Fechamento · D-1
               </p>
             </div>
@@ -44,8 +44,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   className={cn(
                     "inline-flex h-9 items-center gap-2 rounded-[var(--radius-md)] px-3 text-sm font-medium transition-colors",
                     active
-                      ? "bg-ink text-white"
-                      : "text-steel hover:bg-surface-muted hover:text-ink",
+                      ? "bg-primary-soft text-green-800"
+                      : "text-steel hover:bg-primary-soft/60 hover:text-green-800",
                   )}
                 >
                   <Icon className="h-4 w-4" strokeWidth={1.75} />
@@ -68,7 +68,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             className="group flex items-center"
           >
             <div className="leading-none">
-              <p className="font-mono-label text-steel">Powered by</p>
+              <p className="font-mono-label text-green-700">Powered by</p>
               <img
                 src="/brand/ms-inteligencia-logo-black-transparent.png"
                 alt="MS Inteligência"
@@ -76,7 +76,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               />
             </div>
           </a>
-          <p className="hidden text-xs text-steel sm:block">
+          <p className="hidden text-xs text-green-700 sm:block">
             POC · WebPosto ao vivo
           </p>
         </div>
