@@ -23,6 +23,9 @@ export type WebPostoCaixaRow = {
   turno?: string | null;
   pdvCodigo?: number | null;
   funcionarioCodigo?: number | null;
+  centroCusto?: number | null;
+  codigo?: number | null;
+  tipoInclusao?: string | null;
   abertura?: string | null;
   fechamento?: string | null;
   fechado?: boolean | null;
@@ -38,6 +41,16 @@ export type WebPostoApresentadoRow = {
   consolidado?: boolean | null;
   [key: string]: unknown;
 };
+
+export type WebPostoFuncionario = {
+  empresaCodigo: number;
+  funcionarioCodigo: number;
+  nome?: string | null;
+  funcionarioReferencia?: string | null;
+  ativo?: boolean | null;
+  codigo?: number | null;
+};
+
 
 const FORMA_LABELS: Record<string, string> = {
   dinheiro: "Dinheiro",
@@ -102,6 +115,63 @@ export async function fetchWebPostoEmpresas(
     (e) => !isExcludedEmpresa(e.empresaCodigo, e.fantasia, e.razao),
   );
 }
+
+/** Cache of funcionarioCodigo → nome (rede-wide; ~few hundred rows). */
+let funcionarioNameCache: Map<number, string> | null = null;
+let funcionarioNameCacheAt = 0;
+const FUNCIONARIO_CACHE_MS = 15 * 60 * 1000;
+
+export async function fetchWebPostoFuncionarioNames(
+  cfg?: FuelConfig,
+  force = false,
+): Promise<Map<number, string>> {
+  const now = Date.now();
+  if (
+    !force &&
+    funcionarioNameCache &&
+    now - funcionarioNameCacheAt < FUNCIONARIO_CACHE_MS
+  ) {
+    return funcionarioNameCache;
+  }
+
+  const config = cfg ?? loadConfig();
+  const map = new Map<number, string>();
+  let ultimoCodigo: string | number | null = null;
+  let prev: string | number | null = null;
+
+  for (let i = 0; i < 50; i++) {
+    const params: Record<string, string | number | undefined | null> = {
+      tamanhoPagina: 200,
+    };
+    if (ultimoCodigo != null) params.ultimoCodigo = ultimoCodigo;
+    const data = await wpGet<WebPostoFuncionario>("FUNCIONARIO", params, config);
+    const batch = asRows(data);
+    for (const f of batch) {
+      const code = Number(f.funcionarioCodigo);
+      const nome = (f.nome || "").trim();
+      if (code && nome) map.set(code, nome);
+    }
+    if (batch.length < 200) break;
+    const next = Array.isArray(data) ? null : data.ultimoCodigo;
+    if (next == null || next === "" || String(next) === String(prev)) break;
+    prev = ultimoCodigo;
+    ultimoCodigo = next;
+  }
+
+  funcionarioNameCache = map;
+  funcionarioNameCacheAt = now;
+  return map;
+}
+
+export function funcionarioDisplayName(
+  codigo: number | null | undefined,
+  names?: Map<number, string> | null,
+): string | null {
+  if (codigo == null) return null;
+  const nome = names?.get(Number(codigo));
+  return nome || null;
+}
+
 
 export function extractFormasPagamento(
   apr: WebPostoApresentadoRow | undefined | null,

@@ -237,6 +237,15 @@ export function HomeAlerts() {
                         {a.shift.horaAbertura ?? "—"} →{" "}
                         {a.shift.horaFechamento ?? "aberto"}
                       </p>
+                      {a.shift.funcionarioNome || a.shift.funcionarioCodigo != null ? (
+                        <p className="text-xs text-fg-muted">
+                          Operador:{" "}
+                          <span className="font-medium text-fg">
+                            {a.shift.funcionarioNome ??
+                              `cód. ${a.shift.funcionarioCodigo}`}
+                          </span>
+                        </p>
+                      ) : null}
                       {a.primaryForma ? (
                         <p className="mt-1 flex items-center gap-1 text-xs font-medium text-fg-muted">
                           <Search className="h-3 w-3 text-warn" />
@@ -416,10 +425,15 @@ function AlertDetail({
                   {shift.turnoCodigo ?? "—"} · {shift.turno}
                 </dd>
               </div>
-              <div>
-                <dt className="text-[11px] text-fg-subtle">Funcionário</dt>
-                <dd className="font-semibold tabular">
-                  {shift.funcionarioCodigo ?? "—"}
+              <div className="col-span-2 sm:col-span-1">
+                <dt className="text-[11px] text-fg-subtle">Funcionário / operador</dt>
+                <dd className="font-semibold">
+                  {shift.funcionarioNome ?? "—"}
+                  {shift.funcionarioCodigo != null ? (
+                    <span className="ml-1 text-xs font-normal tabular text-fg-muted">
+                      (cód. {shift.funcionarioCodigo})
+                    </span>
+                  ) : null}
                 </dd>
               </div>
               <div>
@@ -468,6 +482,15 @@ function AlertDetail({
                   no PDV{" "}
                   <span className="font-semibold tabular text-fg">
                     {shift.pdvCodigo}
+                  </span>
+                </>
+              ) : null}
+              {shift.funcionarioNome ? (
+                <>
+                  {" "}
+                  · operador{" "}
+                  <span className="font-semibold text-fg">
+                    {shift.funcionarioNome}
                   </span>
                 </>
               ) : null}{" "}

@@ -2,6 +2,7 @@ import { loadConfig, type FuelConfig } from "./config";
 import {
   extractFormasPagamento,
   fetchWebPostoEmpresas,
+  fetchWebPostoFuncionarioNames,
   type WebPostoApresentadoRow,
   type WebPostoCaixaRow,
   type WebPostoEmpresa,
@@ -20,6 +21,7 @@ export type ShiftSummary = {
   turnoCodigo: number | null;
   pdvCodigo: number | null;
   funcionarioCodigo: number | null;
+  funcionarioNome: string | null;
   centroCusto: number | null;
   abertura: string | null;
   fechamento: string | null;
@@ -189,6 +191,7 @@ async function wpFetchAll(
 function buildShift(
   c: WebPostoCaixaRow,
   apr: WebPostoApresentadoRow | undefined,
+  funcionarioNames?: Map<number, string> | null,
 ): ShiftSummary {
   const formas = extractFormasPagamento(apr);
   const diferenca = Number(c.diferenca ?? 0);
@@ -201,6 +204,9 @@ function buildShift(
     centroCusto?: number | null;
     tipoInclusao?: string | null;
   };
+  const funcCode = c.funcionarioCodigo ?? null;
+  const funcNome =
+    funcCode != null ? funcionarioNames?.get(Number(funcCode)) ?? null : null;
   return {
     caixaCodigo: c.caixaCodigo,
     codigo: raw.codigo ?? c.caixaCodigo ?? null,
@@ -209,7 +215,8 @@ function buildShift(
     turno: c.turno ?? (c.turnoCodigo != null ? `Turno ${c.turnoCodigo}` : "—"),
     turnoCodigo: c.turnoCodigo ?? null,
     pdvCodigo: c.pdvCodigo ?? null,
-    funcionarioCodigo: c.funcionarioCodigo ?? null,
+    funcionarioCodigo: funcCode,
+    funcionarioNome: funcNome,
     centroCusto: raw.centroCusto ?? null,
     abertura: c.abertura ?? null,
     fechamento: c.fechamento ?? null,
@@ -299,7 +306,10 @@ export async function buildRedeDayDashboard(
   cfg?: FuelConfig,
 ): Promise<RedeDayDashboard> {
   const config = cfg ?? loadConfig();
-  const empresas = await fetchWebPostoEmpresas(config);
+  const [empresas, funcionarioNames] = await Promise.all([
+    fetchWebPostoEmpresas(config),
+    fetchWebPostoFuncionarioNames(config),
+  ]);
   const sorted = [...empresas].sort((a, b) =>
     (a.fantasia || a.razao || "").localeCompare(
       b.fantasia || b.razao || "",
@@ -341,7 +351,7 @@ export async function buildRedeDayDashboard(
       if (!map.has(r.caixaCodigo)) map.set(r.caixaCodigo, r);
     }
     const shifts = Array.from(map.values()).map((c) =>
-      buildShift(c, aprMap.get(`${c.empresaCodigo}:${c.caixaCodigo}`)),
+      buildShift(c, aprMap.get(`${c.empresaCodigo}:${c.caixaCodigo}`), funcionarioNames),
     );
     return stationFromEmp(e, shifts);
   });
@@ -383,7 +393,10 @@ export async function fetchStationDayLive(
   cfg?: FuelConfig,
 ): Promise<StationDaySummary> {
   const config = cfg ?? loadConfig();
-  const empresas = await fetchWebPostoEmpresas(config);
+  const [empresas, funcionarioNames] = await Promise.all([
+    fetchWebPostoEmpresas(config),
+    fetchWebPostoFuncionarioNames(config),
+  ]);
   const emp =
     empresas.find((e) => e.empresaCodigo === empresaCodigo) ??
     ({
@@ -422,7 +435,7 @@ export async function fetchStationDayLive(
   }
 
   const shifts = Array.from(map.values()).map((c) =>
-    buildShift(c, aprMap.get(`${c.empresaCodigo}:${c.caixaCodigo}`)),
+    buildShift(c, aprMap.get(`${c.empresaCodigo}:${c.caixaCodigo}`), funcionarioNames),
   );
   return stationFromEmp(emp, shifts);
 }
@@ -534,7 +547,10 @@ export async function buildAlertFeed(
   const fromDate = daysAgoIso(lookbackDays);
   const toDate = d1;
 
-  const empresas = await fetchWebPostoEmpresas(config);
+  const [empresas, funcionarioNames] = await Promise.all([
+    fetchWebPostoEmpresas(config),
+    fetchWebPostoFuncionarioNames(config),
+  ]);
   const empMap = new Map(empresas.map((e) => [e.empresaCodigo, e]));
 
   // Weekly chunks, newest first, ending at D-1. D-1 is its own single-day chunk.
@@ -602,6 +618,7 @@ export async function buildAlertFeed(
     const shift = buildShift(
       c,
       aprMap.get(`${c.empresaCodigo}:${c.caixaCodigo}`),
+      funcionarioNames,
     );
     // Conciliado no ERP = já tratado — some da lista de alertas
     if (shift.consolidado) continue;
