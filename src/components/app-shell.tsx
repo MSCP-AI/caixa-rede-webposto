@@ -61,20 +61,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <main className="min-w-0 flex-1">{children}</main>
 
-      {/* Powered by — bottom left (MS Inteligência platform lockup) */}
       <footer className="no-print border-t border-line bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
           <a
             href="https://msinteligencia.com.br"
             target="_blank"
             rel="noreferrer"
-            className="group flex items-center gap-2.5"
+            className="group flex items-center"
           >
-            <img
-              src="/brand/ms-marca-black-transparent.png"
-              alt=""
-              className="h-6 w-auto object-contain opacity-80 transition-opacity group-hover:opacity-100"
-            />
             <div className="leading-none">
               <p className="font-mono-label text-steel">Powered by</p>
               <img
