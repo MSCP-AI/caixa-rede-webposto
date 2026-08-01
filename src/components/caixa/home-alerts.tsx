@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-type Scope = "d1" | "7d";
+type Scope = "d1" | "prior";
 
 export function HomeAlerts() {
   const [scope, setScope] = useState<Scope>("d1");
@@ -51,7 +51,8 @@ export function HomeAlerts() {
     setLoading(true);
     setError(null);
     try {
-      const data = await buildAlertFeed({ lookbackDays: 7 });
+      // Janela ampla p/ capturar backlog antigo; home filtra D-1 vs. anteriores
+      const data = await buildAlertFeed({ lookbackDays: 90 });
       setFeed(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao carregar alertas");
@@ -68,7 +69,7 @@ export function HomeAlerts() {
   const visible = useMemo(() => {
     if (!feed) return [];
     if (scope === "d1") return feed.alerts.filter((a) => a.date === d1);
-    return feed.alerts;
+    return feed.alerts.filter((a) => a.date !== d1);
   }, [feed, scope, d1]);
 
   async function openAlert(a: ShiftAlert) {
@@ -112,8 +113,8 @@ export function HomeAlerts() {
               Alertas de caixa
             </h1>
             <p className="mt-1 text-sm text-fg-muted">
-              Onde olhar no ERP — maior diferença primeiro, depois os mais
-              antigos. Limite {formatCurrency(ALERT_THRESHOLD)}.
+              Onde olhar no ERP — D-1 na manhã; maiores diferenças primeiro.
+              Limite {formatCurrency(ALERT_THRESHOLD)}.
             </p>
           </div>
           <Button variant="secondary" disabled={loading} onClick={() => load()}>
@@ -148,9 +149,10 @@ export function HomeAlerts() {
               tone={feed.totals.d1Count ? "danger" : "ok"}
             />
             <MiniKpi
-              label="7 dias"
-              value={String(feed.totals.count)}
-              hint="com alerta"
+              label="Anteriores"
+              value={String(feed.totals.priorCount)}
+              hint="fora do D-1"
+              tone={feed.totals.priorCount ? "warn" : "ok"}
             />
             <MiniKpi
               label="Abertos"
@@ -171,9 +173,9 @@ export function HomeAlerts() {
               label={`Ontem (D-1) · ${feed.totals.d1Count}`}
             />
             <ScopeChip
-              active={scope === "7d"}
-              onClick={() => setScope("7d")}
-              label={`Últimos 7 dias · ${feed.totals.count}`}
+              active={scope === "prior"}
+              onClick={() => setScope("prior")}
+              label={`Anteriores · ${feed.totals.priorCount}`}
             />
           </div>
 
@@ -187,7 +189,7 @@ export function HomeAlerts() {
                 <p className="max-w-sm text-sm text-fg-muted">
                   Nenhum turno com |diferença| {">"}{" "}
                   {formatCurrency(ALERT_THRESHOLD)}
-                  {scope === "d1" ? " em D-1" : " nos últimos 7 dias"}.
+                  {scope === "d1" ? " em D-1" : " em dias anteriores a D-1"}.
                 </p>
               </CardContent>
             </Card>

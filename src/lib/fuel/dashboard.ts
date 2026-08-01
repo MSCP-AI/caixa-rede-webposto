@@ -473,6 +473,7 @@ export type AlertFeed = {
   totals: {
     count: number;
     d1Count: number;
+    priorCount: number;
     openCount: number;
     maxAbs: number;
     sumAbs: number;
@@ -480,13 +481,14 @@ export type AlertFeed = {
 };
 
 /**
- * Shift-level alerts (default: last 7 days ending D-1, Brazil).
+ * Shift-level alerts (default: last 90 days ending D-1, Brazil).
  * Sort: |diferença| desc → oldest date → oldest abertura.
+ * Home: D-1 vs. anteriores (tudo fora do D-1).
  */
 export async function buildAlertFeed(
   options?: { lookbackDays?: number; threshold?: number; cfg?: FuelConfig },
 ): Promise<AlertFeed> {
-  const lookbackDays = options?.lookbackDays ?? 7;
+  const lookbackDays = options?.lookbackDays ?? 90;
   const threshold = options?.threshold ?? ALERT_THRESHOLD;
   const config = options?.cfg ?? loadConfig();
   const toDate = yesterdayIso();
@@ -557,6 +559,7 @@ export async function buildAlertFeed(
   });
 
   const d1 = yesterdayIso();
+  const d1Count = alerts.filter((a) => a.date === d1).length;
   return {
     fromDate,
     toDate,
@@ -565,7 +568,8 @@ export async function buildAlertFeed(
     alerts,
     totals: {
       count: alerts.length,
-      d1Count: alerts.filter((a) => a.date === d1).length,
+      d1Count,
+      priorCount: alerts.length - d1Count,
       openCount: alerts.filter((a) => !a.shift.fechado).length,
       maxAbs: alerts.reduce((m, a) => Math.max(m, a.absDiff), 0),
       sumAbs: alerts.reduce((s, a) => s + a.absDiff, 0),
