@@ -106,29 +106,23 @@ export function HomeAlerts() {
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8">
-      <header className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="ink">WebPosto</Badge>
-          <Badge variant="muted">D-1</Badge>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
+            Alertas de caixa
+          </h1>
+          <p className="mt-1 text-sm text-steel">
+            Prioridade por valor · limite {formatCurrency(ALERT_THRESHOLD)}
+          </p>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
-              Alertas de caixa
-            </h1>
-            <p className="mt-1 text-sm text-fg-muted">
-              Prioridade por valor. Limite {formatCurrency(ALERT_THRESHOLD)}.
-            </p>
-          </div>
-          <Button variant="secondary" disabled={loading} onClick={() => load()}>
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            Atualizar
-          </Button>
-        </div>
+        <Button variant="secondary" disabled={loading} onClick={() => load()}>
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          Atualizar
+        </Button>
       </header>
 
       {error ? (
