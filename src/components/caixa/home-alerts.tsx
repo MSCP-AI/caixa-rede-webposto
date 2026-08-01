@@ -65,11 +65,15 @@ export function HomeAlerts() {
     void load();
   }, [load]);
 
-  const d1 = yesterdayIso();
+  // Canonical D-1 from the feed (not a second clock) so chips never mix lists
+  const d1 = feed?.toDate ?? yesterdayIso();
   const visible = useMemo(() => {
     if (!feed) return [];
-    if (scope === "d1") return feed.alerts.filter((a) => a.date === d1);
-    return feed.alerts.filter((a) => a.date !== d1);
+    if (scope === "d1") {
+      return feed.alerts.filter((a) => a.date === d1);
+    }
+    // Anteriores = strictly before D-1 — never include D-1 rows
+    return feed.alerts.filter((a) => a.date < d1);
   }, [feed, scope, d1]);
 
   async function openAlert(a: ShiftAlert) {
@@ -145,7 +149,7 @@ export function HomeAlerts() {
             <MiniKpi
               label="D-1"
               value={String(feed.totals.d1Count)}
-              hint={formatShortDate(d1)}
+              hint={formatShortDate(feed.toDate)}
               tone={feed.totals.d1Count ? "danger" : "ok"}
             />
             <MiniKpi
@@ -170,12 +174,12 @@ export function HomeAlerts() {
             <ScopeChip
               active={scope === "d1"}
               onClick={() => setScope("d1")}
-              label={`Ontem (D-1) · ${feed.totals.d1Count}`}
+              label={`Ontem (D-1) ${formatShortDate(feed.toDate)} · ${feed.totals.d1Count}`}
             />
             <ScopeChip
               active={scope === "prior"}
               onClick={() => setScope("prior")}
-              label={`Anteriores · ${feed.totals.priorCount}`}
+              label={`Anteriores (antes de ${formatShortDate(feed.toDate)}) · ${feed.totals.priorCount}`}
             />
           </div>
 
@@ -222,11 +226,6 @@ export function HomeAlerts() {
                           <Badge variant="warn">Aberto</Badge>
                         ) : (
                           <Badge variant="success">Fechado</Badge>
-                        )}
-                        {!a.shift.consolidado ? (
-                          <Badge variant="muted">Não conciliado</Badge>
-                        ) : (
-                          <Badge variant="info">Conciliado</Badge>
                         )}
                       </div>
                       <p className="truncate font-semibold">{a.fantasia}</p>
@@ -385,6 +384,96 @@ function AlertDetail({
               </li>
             ))}
           </ul>
+
+          <div className="rounded-[var(--radius-md)] border border-border bg-surface p-4">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-fg-subtle">
+              Referências para achar no ERP (WebPosto)
+            </p>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
+              <div>
+                <dt className="text-[11px] text-fg-subtle">Cód. caixa</dt>
+                <dd className="font-semibold tabular">{shift.caixaCodigo}</dd>
+              </div>
+              {shift.codigo != null && shift.codigo !== shift.caixaCodigo ? (
+                <div>
+                  <dt className="text-[11px] text-fg-subtle">Código</dt>
+                  <dd className="font-semibold tabular">{shift.codigo}</dd>
+                </div>
+              ) : null}
+              <div>
+                <dt className="text-[11px] text-fg-subtle">Empresa</dt>
+                <dd className="font-semibold tabular">{shift.empresaCodigo}</dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-fg-subtle">PDV</dt>
+                <dd className="font-semibold tabular">
+                  {shift.pdvCodigo ?? "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-fg-subtle">Turno (cód.)</dt>
+                <dd className="font-semibold tabular">
+                  {shift.turnoCodigo ?? "—"} · {shift.turno}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-fg-subtle">Funcionário</dt>
+                <dd className="font-semibold tabular">
+                  {shift.funcionarioCodigo ?? "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-fg-subtle">Centro de custo</dt>
+                <dd className="font-semibold tabular">
+                  {shift.centroCusto ?? "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-fg-subtle">Data movimento</dt>
+                <dd className="font-semibold tabular">
+                  {formatShortDate(alert.date)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-fg-subtle">Abertura</dt>
+                <dd className="font-semibold tabular text-xs">
+                  {shift.abertura
+                    ? new Date(shift.abertura).toLocaleString("pt-BR")
+                    : "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-fg-subtle">Fechamento</dt>
+                <dd className="font-semibold tabular text-xs">
+                  {shift.fechamento
+                    ? new Date(shift.fechamento).toLocaleString("pt-BR")
+                    : "aberto"}
+                </dd>
+              </div>
+              {shift.tipoInclusao ? (
+                <div>
+                  <dt className="text-[11px] text-fg-subtle">Inclusão</dt>
+                  <dd className="font-semibold">{shift.tipoInclusao}</dd>
+                </div>
+              ) : null}
+            </dl>
+            <p className="mt-3 text-xs text-fg-muted">
+              No WebPosto: busque o caixa{" "}
+              <span className="font-semibold tabular text-fg">
+                {shift.caixaCodigo}
+              </span>
+              {shift.pdvCodigo != null ? (
+                <>
+                  {" "}
+                  no PDV{" "}
+                  <span className="font-semibold tabular text-fg">
+                    {shift.pdvCodigo}
+                  </span>
+                </>
+              ) : null}{" "}
+              em {formatShortDate(alert.date)}, turno {shift.turno}.
+            </p>
+          </div>
         </CardContent>
       </Card>
 

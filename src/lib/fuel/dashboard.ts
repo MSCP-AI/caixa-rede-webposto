@@ -12,12 +12,15 @@ export const ALERT_THRESHOLD = 50;
 
 export type ShiftSummary = {
   caixaCodigo: number;
+  /** Mesmo valor que caixaCodigo na maioria dos retornos — referência no ERP */
+  codigo: number | null;
   empresaCodigo: number;
   dataMovimento: string;
   turno: string;
   turnoCodigo: number | null;
   pdvCodigo: number | null;
   funcionarioCodigo: number | null;
+  centroCusto: number | null;
   abertura: string | null;
   fechamento: string | null;
   horaAbertura: string | null;
@@ -27,6 +30,7 @@ export type ShiftSummary = {
   fechado: boolean;
   consolidado: boolean;
   bloqueado: boolean;
+  tipoInclusao: string | null;
   formas: FormaPagamentoLinha[];
   divergenciasForma: FormaPagamentoLinha[];
   hasAlert: boolean;
@@ -192,14 +196,21 @@ function buildShift(
     .filter((f) => Math.abs(f.diferenca) > 0.01)
     .sort((a, b) => Math.abs(b.diferenca) - Math.abs(a.diferenca));
 
+  const raw = c as WebPostoCaixaRow & {
+    codigo?: number | null;
+    centroCusto?: number | null;
+    tipoInclusao?: string | null;
+  };
   return {
     caixaCodigo: c.caixaCodigo,
+    codigo: raw.codigo ?? c.caixaCodigo ?? null,
     empresaCodigo: c.empresaCodigo,
     dataMovimento: c.dataMovimento,
     turno: c.turno ?? (c.turnoCodigo != null ? `Turno ${c.turnoCodigo}` : "—"),
     turnoCodigo: c.turnoCodigo ?? null,
     pdvCodigo: c.pdvCodigo ?? null,
     funcionarioCodigo: c.funcionarioCodigo ?? null,
+    centroCusto: raw.centroCusto ?? null,
     abertura: c.abertura ?? null,
     fechamento: c.fechamento ?? null,
     horaAbertura: formatTime(c.abertura),
@@ -209,6 +220,7 @@ function buildShift(
     fechado: Boolean(c.fechado),
     consolidado: Boolean(c.consolidado),
     bloqueado: Boolean(c.bloqueado),
+    tipoInclusao: raw.tipoInclusao ?? null,
     formas,
     divergenciasForma,
     hasAlert: Math.abs(diferenca) > ALERT_THRESHOLD,
@@ -591,13 +603,14 @@ export async function buildAlertFeed(
       c,
       aprMap.get(`${c.empresaCodigo}:${c.caixaCodigo}`),
     );
+    // Conciliado no ERP = já tratado — some da lista de alertas
+    if (shift.consolidado) continue;
     const absDiff = Math.abs(shift.diferenca);
-    const isAlert =
-      absDiff > threshold || (!shift.fechado && shift.apurado > 0);
+    const isAlert = absDiff > threshold;
     if (!isAlert) continue;
 
     const emp = empMap.get(c.empresaCodigo);
-    const date = (c.dataMovimento || "").slice(0, 10);
+    const date = String(c.dataMovimento || "").slice(0, 10);
     const primaryForma = shift.divergenciasForma[0] ?? null;
     alerts.push({
       id: `${c.empresaCodigo}-${c.caixaCodigo}-${date}`,
@@ -620,6 +633,7 @@ export async function buildAlertFeed(
   });
 
   const d1Count = alerts.filter((a) => a.date === d1).length;
+  const priorCount = alerts.filter((a) => a.date < d1).length;
   return {
     fromDate,
     toDate,
@@ -629,7 +643,7 @@ export async function buildAlertFeed(
     totals: {
       count: alerts.length,
       d1Count,
-      priorCount: alerts.length - d1Count,
+      priorCount,
       openCount: alerts.filter((a) => !a.shift.fechado).length,
       maxAbs: alerts.reduce((m, a) => Math.max(m, a.absDiff), 0),
       sumAbs: alerts.reduce((s, a) => s + a.absDiff, 0),
