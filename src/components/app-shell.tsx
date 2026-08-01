@@ -15,13 +15,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="no-print sticky top-0 z-40 border-b border-line bg-white/95 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Link to="/" className="flex min-w-0 items-center gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-ink">
-              <img
-                src="/brand/ms-marca-white-transparent.png"
-                alt=""
-                className="h-5 w-5 object-contain"
-              />
-            </span>
+            <img
+              src="/brand/ms-marca-black-transparent.png"
+              alt="MS Inteligência"
+              className="h-8 w-auto shrink-0 object-contain"
+            />
             <div className="min-w-0 leading-none">
               <p className="font-display text-[15px] font-extrabold tracking-tight text-ink">
                 Caixa Rede
