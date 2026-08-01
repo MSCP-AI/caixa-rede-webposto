@@ -1,13 +1,12 @@
 import { cn } from "@/lib/utils";
 
 const variants: Record<string, string> = {
-  default: "bg-green-100 text-green-800",
-  success: "bg-success-soft text-success-fg",
-  danger: "bg-danger-soft text-danger-fg",
-  warn: "bg-warn-soft text-warn-fg",
-  info: "bg-neutral-bg text-neutral-fg",
-  muted: "bg-surface-muted text-steel",
-  ink: "bg-ink text-white",
+  default: "bg-primary-soft text-primary",
+  success: "bg-success-soft text-success",
+  danger: "bg-danger-soft text-danger",
+  warn: "bg-warn-soft text-warn",
+  info: "bg-[#dce7f0] text-info",
+  muted: "bg-surface-muted text-fg-muted",
 };
 
 export function Badge({
@@ -22,7 +21,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "font-mono-label inline-flex items-center rounded px-2 py-0.5",
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
         variants[variant] ?? variants.default,
         className,
       )}

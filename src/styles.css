@@ -1,32 +1,79 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* MS Inteligência design tokens — see /brand/MS_INTELIGENCIA_BRAND.md */
 @theme {
-  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Fraunces", Georgia, serif;
-  --color-bg: #f4f1ea;
-  --color-bg-elevated: #faf8f4;
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* Core */
+  --color-ink: #0b0c0e;
+  --color-paper: #f4f4f1;
+  --color-white: #ffffff;
+  --color-signal: #2e9e63;
+  --color-steel: #63666c;
+  --color-line: #e2e2dd;
+
+  /* Green ramp */
+  --color-green-100: #e6f6ec;
+  --color-green-200: #c2e9d2;
+  --color-green-300: #8fd6ae;
+  --color-green-400: #55be87;
+  --color-green-500: #2e9e63;
+  --color-green-600: #24824f;
+  --color-green-700: #1b673e;
+  --color-green-800: #134c2d;
+  --color-green-900: #0c321d;
+
+  /* Neutral ramp */
+  --color-n-100: #f4f4f1;
+  --color-n-200: #e2e2dd;
+  --color-n-300: #c9c9c4;
+  --color-n-400: #a3a5a9;
+  --color-n-500: #8a8d93;
+  --color-n-600: #63666c;
+  --color-n-700: #45484d;
+  --color-n-800: #26282b;
+  --color-n-900: #0b0c0e;
+
+  /* Semantic */
+  --color-success: #2e9e63;
+  --color-success-bg: #e6f6ec;
+  --color-success-fg: #134c2d;
+  --color-warning: #b97b16;
+  --color-warning-bg: #fdf3e1;
+  --color-warning-fg: #7a5010;
+  --color-danger: #b3261e;
+  --color-danger-bg: #fbe9e7;
+  --color-danger-fg: #7c1a15;
+  --color-neutral-bg: #ededea;
+  --color-neutral-fg: #45484d;
+
+  /* Semantic aliases used by components */
+  --color-bg: #f4f4f1;
+  --color-bg-elevated: #ffffff;
   --color-surface: #ffffff;
-  --color-surface-muted: #f0ebe1;
-  --color-fg: #1a1c1a;
-  --color-fg-muted: #5c615c;
-  --color-fg-subtle: #8a908a;
-  --color-border: #ddd6c8;
-  --color-border-strong: #c9c0ae;
-  --color-primary: #0f4c3a;
-  --color-primary-fg: #f4f1ea;
-  --color-primary-soft: #d8ebe3;
-  --color-accent: #0b3d2f;
-  --color-danger: #a33b2d;
-  --color-danger-soft: #f5e0dc;
-  --color-warn: #9a6b1f;
-  --color-warn-soft: #f5ebcf;
-  --color-success: #1f6f54;
-  --color-success-soft: #d8ebe3;
-  --color-info: #2c4f6e;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
+  --color-surface-muted: #ededea;
+  --color-fg: #0b0c0e;
+  --color-fg-muted: #63666c;
+  --color-fg-subtle: #8a8d93;
+  --color-border: #e2e2dd;
+  --color-border-strong: #c9c9c4;
+  --color-primary: #2e9e63;
+  --color-primary-fg: #ffffff;
+  --color-primary-soft: #e6f6ec;
+  --color-accent: #24824f;
+  --color-danger-soft: #fbe9e7;
+  --color-warn: #b97b16;
+  --color-warn-soft: #fdf3e1;
+  --color-success-soft: #e6f6ec;
+  --color-info: #45484d;
+  --color-info-soft: #ededea;
+
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
 }
 
 @layer base {
@@ -37,24 +84,38 @@
   body {
     margin: 0;
     min-height: 100%;
-    background: var(--color-bg);
-    color: var(--color-fg);
+    background: var(--color-paper);
+    color: var(--color-ink);
     font-family: var(--font-sans);
+    font-weight: 400;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
   }
-  body {
-    background-image:
-      radial-gradient(ellipse 80% 50% at 10% -10%, #d8ebe355, transparent),
-      radial-gradient(ellipse 60% 40% at 100% 0%, #f5ebcf44, transparent);
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: var(--color-green-200);
+    color: var(--color-ink);
   }
 }
 
 @utility font-display {
   font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+@utility font-mono-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }
+
 @utility bg-bg {
   background-color: var(--color-bg);
 }
@@ -67,14 +128,26 @@
 @utility bg-surface-muted {
   background-color: var(--color-surface-muted);
 }
+@utility bg-paper {
+  background-color: var(--color-paper);
+}
+@utility bg-ink {
+  background-color: var(--color-ink);
+}
 @utility text-fg {
   color: var(--color-fg);
+}
+@utility text-ink {
+  color: var(--color-ink);
 }
 @utility text-fg-muted {
   color: var(--color-fg-muted);
 }
 @utility text-fg-subtle {
   color: var(--color-fg-subtle);
+}
+@utility text-steel {
+  color: var(--color-steel);
 }
 @utility text-primary {
   color: var(--color-primary);
@@ -85,14 +158,26 @@
 @utility text-danger {
   color: var(--color-danger);
 }
+@utility text-danger-fg {
+  color: var(--color-danger-fg);
+}
 @utility text-warn {
-  color: var(--color-warn);
+  color: var(--color-warning);
+}
+@utility text-warn-fg {
+  color: var(--color-warning-fg);
 }
 @utility text-success {
   color: var(--color-success);
 }
+@utility text-success-fg {
+  color: var(--color-success-fg);
+}
 @utility border-border {
   border-color: var(--color-border);
+}
+@utility border-line {
+  border-color: var(--color-line);
 }
 @utility border-border-strong {
   border-color: var(--color-border-strong);
@@ -116,7 +201,7 @@
   border-color: var(--color-danger);
 }
 @utility border-warn {
-  border-color: var(--color-warn);
+  border-color: var(--color-warning);
 }
 @utility border-success {
   border-color: var(--color-success);
@@ -125,11 +210,20 @@
   border-color: var(--color-primary);
 }
 @utility ring-primary {
-  --tw-ring-color: var(--color-primary);
+  --tw-ring-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
 }
 
 @media print {
   .no-print {
     display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }

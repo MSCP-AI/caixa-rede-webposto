@@ -6,10 +6,7 @@ export function Label({
 }: React.LabelHTMLAttributes<HTMLLabelElement>) {
   return (
     <label
-      className={cn(
-        "text-xs font-medium uppercase tracking-wide text-fg-subtle",
-        className,
-      )}
+      className={cn("font-mono-label text-steel", className)}
       {...props}
     />
   );

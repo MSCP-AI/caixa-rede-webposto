@@ -108,16 +108,17 @@ export function HomeAlerts() {
     <div className="mx-auto w-full max-w-3xl space-y-6 overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8">
       <header className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="ink">WebPosto</Badge>
-          <Badge variant="muted">D-1</Badge>
+          <Badge variant="success">WebPosto ao vivo</Badge>
+          <Badge variant="muted">Checagem matinal · D-1</Badge>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
+            <h1 className="font-display text-3xl font-semibold tracking-tight">
               Alertas de caixa
             </h1>
             <p className="mt-1 text-sm text-fg-muted">
-              Prioridade por valor. Limite {formatCurrency(ALERT_THRESHOLD)}.
+              Onde olhar no ERP — D-1 na manhã; maiores diferenças primeiro.
+              Limite {formatCurrency(ALERT_THRESHOLD)}.
             </p>
           </div>
           <Button variant="secondary" disabled={loading} onClick={() => load()}>
@@ -204,11 +205,11 @@ export function HomeAlerts() {
                     type="button"
                     onClick={() => void openAlert(a)}
                     className={cn(
-                      "flex w-full flex-col gap-2 rounded-[var(--radius-lg)] border bg-surface px-4 py-3.5 text-left transition-colors hover:border-border-strong sm:flex-row sm:items-center sm:justify-between",
+                      "flex w-full flex-col gap-2 rounded-[var(--radius-lg)] border bg-surface px-4 py-3.5 text-left shadow-sm transition-colors hover:border-border-strong sm:flex-row sm:items-center sm:justify-between",
                       !a.shift.fechado
                         ? "border-warn/40"
                         : "border-danger/25",
-                      idx === 0 && "border-l-2 border-l-danger",
+                      idx === 0 && "ring-2 ring-danger/20",
                     )}
                   >
                     <div className="min-w-0 flex-1">
@@ -317,7 +318,7 @@ function AlertDetail({
             <Badge variant="success">Fechado</Badge>
           )}
         </div>
-        <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
+        <h1 className="font-display text-3xl font-semibold tracking-tight">
           {alert.fantasia}
         </h1>
         <p className="text-sm text-fg-muted">
@@ -326,7 +327,7 @@ function AlertDetail({
         </p>
       </header>
 
-      <Card className="border-line border-l-2 border-l-danger">
+      <Card className="border-danger/30 bg-danger-soft/25">
         <CardHeader className="pb-2">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-danger" />
@@ -588,17 +589,17 @@ function MiniKpi({
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-lg)] border border-border bg-surface p-3",
+        "rounded-[var(--radius-lg)] border border-border bg-surface p-3 shadow-sm",
         tone === "ok" && "border-success/30 bg-success-soft/30",
         tone === "danger" && "border-danger/30 bg-danger-soft/30",
         tone === "warn" && "border-warn/30 bg-warn-soft/30",
       )}
     >
-      <p className="font-mono-label text-steel">{label}</p>
-      <p className="mt-1.5 font-display text-xl font-extrabold tabular text-ink">
-        {value}
+      <p className="text-[10px] font-medium uppercase tracking-wide text-fg-subtle">
+        {label}
       </p>
-      {hint ? <p className="mt-0.5 text-xs text-steel">{hint}</p> : null}
+      <p className="mt-1 font-display text-lg font-semibold tabular">{value}</p>
+      {hint ? <p className="text-[11px] text-fg-muted">{hint}</p> : null}
     </div>
   );
 }
@@ -619,8 +620,8 @@ function ScopeChip({
       className={cn(
         "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
         active
-          ? "border-ink bg-ink text-white"
-          : "border-line bg-white text-steel hover:text-ink",
+          ? "border-primary bg-primary-soft text-primary"
+          : "border-border bg-bg-elevated text-fg-muted hover:text-fg",
       )}
     >
       {label}

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 110" width="520" height="110" role="img" aria-label="MS inteligência">
+  <path d="M8 18 h28 v10 H22 v54 h14 v10 H8 Z" fill="#ffffff"/>
+  <path d="M118 18 H90 v10 h14 v54 H90 v10 h28 Z" fill="#ffffff"/>
+  <text x="28" y="82" font-family="Arial Black, Helvetica Neue, Arial, sans-serif" font-size="64" font-weight="900" fill="#ffffff">M</text>
+  <text x="68" y="82" font-family="Arial Black, Helvetica Neue, Arial, sans-serif" font-size="64" font-weight="900" fill="#22a34a">S</text>
+  <text x="140" y="78" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="52" font-weight="600" fill="#ffffff" letter-spacing="-0.5">inteligência</text>
+</svg>

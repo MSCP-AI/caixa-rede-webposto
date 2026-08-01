@@ -123,7 +123,7 @@ export function RedeDashboard() {
                   <Badge variant="danger">{dash.totals.alertas} alerta(s)</Badge>
                 ) : null}
               </div>
-              <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+              <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
                 Resumo da rede
               </h1>
             </div>
@@ -162,7 +162,7 @@ export function RedeDashboard() {
             </div>
           ) : dash ? (
             <>
-              <section className="rounded-[var(--radius-xl)] border border-border bg-surface px-5 py-4">
+              <section className="rounded-[var(--radius-xl)] border border-border bg-surface px-5 py-4 shadow-sm">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-fg-subtle">
@@ -408,7 +408,7 @@ export function RedeDashboard() {
                 )}
                 <Badge variant="muted">{formatShortDate(date)}</Badge>
               </div>
-              <h1 className="font-display text-3xl font-extrabold text-ink">{station.fantasia}</h1>
+              <h1 className="font-display text-3xl font-semibold">{station.fantasia}</h1>
               <p className="text-sm text-fg-muted">
                 {[station.cidade, station.estado].filter(Boolean).join(" · ")}
               </p>
@@ -618,7 +618,7 @@ function Kpi({
   onClick?: () => void;
 }) {
   const className = cn(
-    "rounded-[var(--radius-lg)] border border-border bg-surface p-4 text-left",
+    "rounded-[var(--radius-lg)] border border-border bg-surface p-4 text-left shadow-sm",
     tone === "ok" && "border-success/30 bg-success-soft/40",
     tone === "danger" && "border-danger/30 bg-danger-soft/40",
     tone === "warn" && "border-warn/30 bg-warn-soft/40",
@@ -656,7 +656,7 @@ function Mini({
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-lg)] border border-border bg-surface p-4",
+        "rounded-[var(--radius-lg)] border border-border bg-surface p-4 shadow-sm",
         tone === "ok" && "border-success/30 bg-success-soft/30",
         tone === "danger" && "border-danger/30 bg-danger-soft/30",
         tone === "warn" && "border-warn/30 bg-warn-soft/30",
